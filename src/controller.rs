@@ -13,6 +13,7 @@ use drift_sdk::{
 use futures_util::{stream::FuturesUnordered, StreamExt};
 use log::{debug, warn};
 use rust_decimal::Decimal;
+use solana_sdk::signature::Keypair;
 use thiserror::Error;
 
 use crate::{
@@ -77,7 +78,7 @@ impl AppState {
         let account_provider = WsAccountProvider::new_with_commitment(endpoint, state_commitment)
             .await
             .expect("ws connects");
-        let client = DriftClient::new(context, account_provider)
+        let client = DriftClient::new(context, account_provider, Keypair::new())
             .await
             .expect("ok");
 
@@ -132,7 +133,7 @@ impl AppState {
             Cow::Owned(account_data?),
             self.delegated,
         )
-        .priority_fee(pf);
+        ;
         let tx = build_cancel_ix(builder, req)?.build();
         self.send_tx(tx, "cancel_orders").await
     }
@@ -251,7 +252,7 @@ impl AppState {
             Cow::Owned(account_data?),
             self.delegated,
         )
-        .priority_fee(pf);
+        ;
 
         let builder = build_cancel_ix(builder, req.cancel)?;
         let tx = build_modify_ix(builder, req.modify, self.client.program_data())?
@@ -286,7 +287,6 @@ impl AppState {
             Cow::Owned(account_data?),
             self.delegated,
         )
-        .priority_fee(pf)
         .place_orders(orders)
         .build();
 
@@ -310,7 +310,7 @@ impl AppState {
             Cow::Owned(account_data?),
             self.delegated,
         )
-        .priority_fee(pf);
+        ;
         let tx = build_modify_ix(builder, req, self.client.program_data())?.build();
         self.send_tx(tx, "modify_orders").await
     }
@@ -516,10 +516,29 @@ mod tests {
         let account_provider = WsAccountProvider::new("https://api.devnet.solana.com")
             .await
             .expect("ws connects");
-        let client = DriftClient::new(Context::DevNet, account_provider)
+        let client = DriftClient::new(Context::DevNet, account_provider, Keypair::new())
             .await
             .expect("ok");
 
         assert!(get_priority_fee(&client).await > 0);
+    }
+
+    pub const MAINNET: &str = "https://api.mainnet-beta.solana.com";
+    pub const DEVNET: &str = "https://api.devnet.solana.com";
+
+    use super::*;
+    use drift_sdk::types::Context;
+    use eyre::Result;
+
+    #[tokio::test]
+    async fn test_connect_to_drift() -> Result<()> {
+        let context = Context::DevNet;
+        let endpoint = DEVNET;
+        let state_commitment = CommitmentConfig::confirmed();
+        let account_provider = WsAccountProvider::new_with_commitment(endpoint, state_commitment)
+            .await?;
+        let client = DriftClient::new(context, account_provider, Keypair::new())
+            .await?;
+        Ok(())
     }
 }
