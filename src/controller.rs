@@ -132,8 +132,7 @@ impl AppState {
             sub_account,
             Cow::Owned(account_data?),
             self.delegated,
-        )
-        ;
+        );
         let tx = build_cancel_ix(builder, req)?.build();
         self.send_tx(tx, "cancel_orders").await
     }
@@ -252,7 +251,7 @@ impl AppState {
             Cow::Owned(account_data?),
             self.delegated,
         )
-        ;
+            ;
 
         let builder = build_cancel_ix(builder, req.cancel)?;
         let tx = build_modify_ix(builder, req.modify, self.client.program_data())?
@@ -287,8 +286,8 @@ impl AppState {
             Cow::Owned(account_data?),
             self.delegated,
         )
-        .place_orders(orders)
-        .build();
+            .place_orders(orders)
+            .build();
 
         self.send_tx(tx, "place_orders").await
     }
@@ -310,7 +309,7 @@ impl AppState {
             Cow::Owned(account_data?),
             self.delegated,
         )
-        ;
+            ;
         let tx = build_modify_ix(builder, req, self.client.program_data())?.build();
         self.send_tx(tx, "modify_orders").await
     }
@@ -523,7 +522,6 @@ mod tests {
         assert!(get_priority_fee(&client).await > 0);
     }
 
-    pub const MAINNET: &str = "https://api.mainnet-beta.solana.com";
     pub const DEVNET: &str = "https://api.devnet.solana.com";
 
     use super::*;
@@ -537,7 +535,7 @@ mod tests {
         let state_commitment = CommitmentConfig::confirmed();
         let account_provider = WsAccountProvider::new_with_commitment(endpoint, state_commitment)
             .await?;
-        let client = DriftClient::new(context, account_provider, Keypair::new())
+        let client = DriftClient::new(context, account_provider)
             .await?;
         Ok(())
     }
